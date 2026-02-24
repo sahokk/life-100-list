@@ -18,7 +18,7 @@
 
 ```
 app/
-  layout.tsx               # ルートレイアウト (Header 含む)
+  layout.tsx               # ルートレイアウト (Header + ToastProvider)
   page.tsx                 # トップページ (公開リスト一覧)
   globals.css              # グローバルCSS (Tailwind)
   login/page.tsx           # ログイン
@@ -28,13 +28,24 @@ app/
     page.tsx               # マイリスト (Server Component)
     client.tsx             # マイリスト (Client Component)
     actions.ts             # Server Actions (アイテム CRUD)
+    queries.ts             # データ取得 (リスト・いいね)
+  search/
+    page.tsx               # 検索 (Server Component)
+    client.tsx             # 検索 (Client Component)
+    queries.ts             # 検索クエリ (ユーザー・アイテム)
+  likes/actions.ts         # いいね Server Actions
+  follows/actions.ts       # フォロー Server Actions
   profile/[userId]/page.tsx  # プロフィール表示
   settings/profile/page.tsx  # プロフィール編集
 components/
   header.tsx               # 共通ヘッダー
-  item-list.tsx            # アイテム一覧
-  item-form.tsx            # アイテム追加/編集フォーム
+  item-list.tsx            # アイテム一覧 (いいねボタン含む)
+  item-form.tsx            # アイテム追加/編集フォーム (画像アップロード含む)
   image-upload.tsx         # 画像アップロード
+  like-button.tsx          # いいねボタン
+  follow-button.tsx        # フォローボタン
+  toast.tsx                # トースト通知 (ToastProvider + useToast)
+  confirm-dialog.tsx       # 確認ダイアログ
 lib/supabase/
   client.ts                # ブラウザ用 Supabase クライアント
   server.ts                # サーバー用 Supabase クライアント
@@ -65,19 +76,29 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<Supabase Anon Key>
 SUPABASE_SERVICE_ROLE_KEY=<Supabase Service Role Key (サーバーサイド専用)>
 ```
 
-## データモデル (MVP)
+## データモデル
 
 - **users** - プロフィール情報 (id, username, icon_url, bio, created_at, updated_at)
 - **lists** - リスト (id, user_id, is_public, created_at, updated_at)
 - **items** - やりたいこと (id, list_id, title, description, is_completed, completed_at, priority, image_url, order, created_at, updated_at)
+- **likes** - いいね (id, user_id, item_id, created_at)
+- **follows** - フォロー関係 (id, follower_id, followee_id, created_at)
 
-## MVP 機能スコープ
+## 実装済み機能
+
+### MVP
 
 1. ユーザー登録・ログイン (メール + パスワード)
-2. リストの作成・編集・削除
-3. アイテムの追加・編集・削除
+2. リストの作成・編集
+3. アイテムの追加・編集・削除 (画像アップロード含む)
 4. リストの公開/非公開設定
 5. プロフィールページ
+
+### 追加機能
+
+1. 検索機能 (ユーザー名・キーワード)
+2. いいね/リアクション機能
+3. フォロー/アンフォロー機能
 
 ## コーディング規約
 
