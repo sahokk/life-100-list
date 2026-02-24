@@ -2,9 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import type { Database } from "@/types/database";
-
-type UserRow = Database["public"]["Tables"]["users"]["Row"];
 
 type Props = {
   params: Promise<{ userId: string }>;
@@ -14,13 +11,11 @@ export default async function ProfilePage({ params }: Props) {
   const { userId } = await params;
   const supabase = await createClient();
 
-  const { data } = await supabase
+  const { data: profile } = await supabase
     .from("users")
     .select("*")
     .eq("id", userId)
     .single();
-
-  const profile = data as UserRow | null;
 
   if (!profile) {
     notFound();
