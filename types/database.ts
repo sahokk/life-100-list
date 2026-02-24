@@ -138,6 +138,41 @@ export type Database = {
           },
         ];
       };
+      follows: {
+        Row: {
+          id: string;
+          follower_id: string;
+          followee_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          follower_id: string;
+          followee_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          follower_id?: string;
+          followee_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey";
+            columns: ["follower_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "follows_followee_id_fkey";
+            columns: ["followee_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

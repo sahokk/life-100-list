@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ItemList from "@/components/item-list";
+import FollowButton from "@/components/follow-button";
 import { getLikesForItems } from "@/app/my-list/queries";
 import type { Database } from "@/types/database";
 
@@ -31,6 +32,23 @@ export default async function ProfilePage({ params }: Props) {
   } = await supabase.auth.getUser();
 
   const isOwner = currentUser?.id === userId;
+
+  // フォロー情報を取得
+  const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
+    supabase.from("follows").select("*", { count: "exact", head: true }).eq("followee_id", userId),
+    supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", userId),
+  ]);
+
+  let isFollowing = false;
+  if (currentUser && !isOwner) {
+    const { data: followRow } = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", currentUser.id)
+      .eq("followee_id", userId)
+      .maybeSingle();
+    isFollowing = !!followRow;
+  }
 
   // 公開リスト (本人の場合は非公開でも表示)
   const listQuery = supabase
@@ -89,6 +107,13 @@ export default async function ProfilePage({ params }: Props) {
                 編集
               </Link>
             )}
+            {!isOwner && currentUser && (
+              <FollowButton targetUserId={userId} isFollowing={isFollowing} />
+            )}
+          </div>
+          <div className="mt-2 flex gap-4 text-sm text-zinc-500">
+            <span><strong className="text-zinc-700 dark:text-zinc-300">{followingCount ?? 0}</strong> フォロー中</span>
+            <span><strong className="text-zinc-700 dark:text-zinc-300">{followerCount ?? 0}</strong> フォロワー</span>
           </div>
           {profile.bio && (
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
