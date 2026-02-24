@@ -25,6 +25,7 @@ export type Database = {
           bio?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       lists: {
         Row: {
@@ -45,6 +46,15 @@ export type Database = {
           is_public?: boolean;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "lists_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       items: {
         Row: {
@@ -83,6 +93,15 @@ export type Database = {
           order?: number;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "items_list_id_fkey";
+            columns: ["list_id"];
+            isOneToOne: false;
+            referencedRelation: "lists";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;
