@@ -17,20 +17,33 @@
 ## プロジェクト構造
 
 ```
-app/                    # Next.js App Router ページ
-  layout.tsx            # ルートレイアウト
-  page.tsx              # トップページ
-  globals.css           # グローバルCSS (Tailwind)
-components/             # React コンポーネント
-lib/
-  supabase/
-    client.ts           # ブラウザ用 Supabase クライアント
-    server.ts           # サーバー用 Supabase クライアント
+app/
+  layout.tsx               # ルートレイアウト (Header 含む)
+  page.tsx                 # トップページ (公開リスト一覧)
+  globals.css              # グローバルCSS (Tailwind)
+  login/page.tsx           # ログイン
+  register/page.tsx        # 新規登録
+  auth/callback/route.ts   # 認証コールバック
+  my-list/
+    page.tsx               # マイリスト (Server Component)
+    client.tsx             # マイリスト (Client Component)
+    actions.ts             # Server Actions (アイテム CRUD)
+  profile/[userId]/page.tsx  # プロフィール表示
+  settings/profile/page.tsx  # プロフィール編集
+components/
+  header.tsx               # 共通ヘッダー
+  item-list.tsx            # アイテム一覧
+  item-form.tsx            # アイテム追加/編集フォーム
+  image-upload.tsx         # 画像アップロード
+lib/supabase/
+  client.ts                # ブラウザ用 Supabase クライアント
+  server.ts                # サーバー用 Supabase クライアント
 types/
-  database.ts           # Supabase DB 型定義
-public/                 # 静的ファイル
+  database.ts              # Supabase DB 型定義
+middleware.ts              # 認証ミドルウェア
+supabase/migrations/       # SQL マイグレーション
 docs/
-  requirements.md       # 要件定義書
+  requirements.md          # 要件定義書
 ```
 
 ## 開発コマンド
