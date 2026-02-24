@@ -25,7 +25,10 @@ export async function getOrCreateList() {
     .select()
     .single();
 
-  if (error || !newList) throw new Error("リストの作成に失敗しました");
+  if (error || !newList) {
+    console.error("リスト作成エラー:", error);
+    throw new Error("リストの作成に失敗しました");
+  }
 
   return { list: newList, userId: user.id };
 }
