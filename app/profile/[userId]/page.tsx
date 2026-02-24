@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import ItemList from "@/components/item-list";
 
 type Props = {
   params: Promise<{ userId: string }>;
@@ -26,6 +27,30 @@ export default async function ProfilePage({ params }: Props) {
   } = await supabase.auth.getUser();
 
   const isOwner = currentUser?.id === userId;
+
+  // 公開リスト (本人の場合は非公開でも表示)
+  const listQuery = supabase
+    .from("lists")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  const { data: list } = await listQuery;
+
+  const canViewList = list && (list.is_public || isOwner);
+
+  let items: unknown[] = [];
+  if (canViewList) {
+    const { data } = await supabase
+      .from("items")
+      .select("*")
+      .eq("list_id", list.id)
+      .order("order", { ascending: true })
+      .order("created_at", { ascending: true });
+    items = data ?? [];
+  }
+
+  const completedCount = items.filter((i: unknown) => (i as { is_completed: boolean }).is_completed).length;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -62,15 +87,24 @@ export default async function ProfilePage({ params }: Props) {
               {profile.bio}
             </p>
           )}
+          {canViewList && (
+            <p className="mt-2 text-sm text-zinc-500">
+              {completedCount} / {items.length} 達成
+            </p>
+          )}
         </div>
       </div>
 
-      {/* リスト表示はフェーズ 5 で統合 */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold">やりたいことリスト</h2>
-        <p className="mt-2 text-sm text-zinc-500">
-          まだリストがありません
-        </p>
+        <h2 className="mb-4 text-lg font-semibold">やりたいことリスト</h2>
+        {canViewList ? (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <ItemList items={items as any[]} />
+        ) : list && !list.is_public ? (
+          <p className="text-sm text-zinc-500">このリストは非公開です</p>
+        ) : (
+          <p className="text-sm text-zinc-500">まだリストがありません</p>
+        )}
       </div>
     </div>
   );
