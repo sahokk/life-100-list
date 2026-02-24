@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ItemList from "@/components/item-list";
+import type { Database } from "@/types/database";
+
+type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
 type Props = {
   params: Promise<{ userId: string }>;
@@ -39,7 +42,7 @@ export default async function ProfilePage({ params }: Props) {
 
   const canViewList = list && (list.is_public || isOwner);
 
-  let items: unknown[] = [];
+  let items: ItemRow[] = [];
   if (canViewList) {
     const { data } = await supabase
       .from("items")
@@ -47,10 +50,10 @@ export default async function ProfilePage({ params }: Props) {
       .eq("list_id", list.id)
       .order("order", { ascending: true })
       .order("created_at", { ascending: true });
-    items = data ?? [];
+    items = (data ?? []) as ItemRow[];
   }
 
-  const completedCount = items.filter((i: unknown) => (i as { is_completed: boolean }).is_completed).length;
+  const completedCount = items.filter((i) => i.is_completed).length;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -98,8 +101,7 @@ export default async function ProfilePage({ params }: Props) {
       <div className="mt-8">
         <h2 className="mb-4 text-lg font-semibold">やりたいことリスト</h2>
         {canViewList ? (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <ItemList items={items as any[]} />
+          <ItemList items={items} />
         ) : list && !list.is_public ? (
           <p className="text-sm text-zinc-500">このリストは非公開です</p>
         ) : (

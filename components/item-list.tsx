@@ -8,6 +8,8 @@ import {
   updateItem,
 } from "@/app/my-list/actions";
 import ItemForm from "./item-form";
+import ConfirmDialog from "./confirm-dialog";
+import { useToast } from "./toast";
 import Image from "next/image";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
@@ -29,9 +31,12 @@ const PRIORITY_LABELS: Record<number, string> = {
 export default function ItemList({
   items,
   editable = false,
+  userId,
 }: ItemListProps) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const filteredItems = items.filter((item) => {
     if (filter === "completed") return item.is_completed;
@@ -40,6 +45,26 @@ export default function ItemList({
   });
 
   const completedCount = items.filter((i) => i.is_completed).length;
+
+  async function handleDelete() {
+    if (!deletingId) return;
+    try {
+      await deleteItem(deletingId);
+      showToast("アイテムを削除しました");
+    } catch {
+      showToast("削除に失敗しました", "error");
+    }
+    setDeletingId(null);
+  }
+
+  async function handleToggle(itemId: string, completed: boolean) {
+    try {
+      await toggleItemCompleted(itemId, completed);
+      showToast(completed ? "達成おめでとう！" : "未達成に戻しました");
+    } catch {
+      showToast("更新に失敗しました", "error");
+    }
+  }
 
   return (
     <div>
@@ -85,10 +110,22 @@ export default function ItemList({
                     title: item.title,
                     description: item.description,
                     priority: item.priority,
+                    image_url: item.image_url,
                   }}
+                  userId={userId}
                   submitLabel="更新"
                   onSubmit={async (data) => {
-                    await updateItem(item.id, data);
+                    try {
+                      await updateItem(item.id, {
+                        title: data.title,
+                        description: data.description ?? null,
+                        priority: data.priority ?? null,
+                        image_url: data.image_url ?? null,
+                      });
+                      showToast("アイテムを更新しました");
+                    } catch {
+                      showToast("更新に失敗しました", "error");
+                    }
                     setEditingId(null);
                   }}
                   onCancel={() => setEditingId(null)}
@@ -99,7 +136,7 @@ export default function ItemList({
                   {editable && (
                     <button
                       onClick={() =>
-                        toggleItemCompleted(item.id, !item.is_completed)
+                        handleToggle(item.id, !item.is_completed)
                       }
                       className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border ${
                         item.is_completed
@@ -180,11 +217,7 @@ export default function ItemList({
                         </svg>
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm("このアイテムを削除しますか？")) {
-                            deleteItem(item.id);
-                          }
-                        }}
+                        onClick={() => setDeletingId(item.id)}
                         className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                         title="削除"
                       >
@@ -200,6 +233,15 @@ export default function ItemList({
           ))}
         </ul>
       )}
+
+      {/* 削除確認ダイアログ */}
+      <ConfirmDialog
+        open={!!deletingId}
+        title="アイテムの削除"
+        message="このアイテムを削除しますか？この操作は取り消せません。"
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingId(null)}
+      />
     </div>
   );
 }

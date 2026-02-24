@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "./toast";
 import Image from "next/image";
 
 type ImageUploadProps = {
@@ -21,6 +22,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
   const supabase = createClient();
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -37,7 +39,7 @@ export default function ImageUpload({
       .upload(filePath, file, { upsert: true });
 
     if (error) {
-      alert("画像のアップロードに失敗しました");
+      showToast("画像のアップロードに失敗しました", "error");
       setUploading(false);
       return;
     }

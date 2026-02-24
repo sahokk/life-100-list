@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
+type PublicList = { id: string; user_id: string; is_public: boolean; updated_at: string };
+type UserInfo = { id: string; username: string; icon_url: string | null };
+type ItemStat = { list_id: string; is_completed: boolean };
+
 export default async function Home() {
   const supabase = await createClient();
 
@@ -13,21 +17,21 @@ export default async function Home() {
     .limit(20);
 
   // ユーザー情報を取得
-  const userIds = [...new Set((publicLists ?? []).map((l: { user_id: string }) => l.user_id))];
+  const userIds = [...new Set((publicLists ?? []).map((l: PublicList) => l.user_id))];
   const { data: users } = userIds.length > 0
     ? await supabase.from("users").select("id, username, icon_url").in("id", userIds)
     : { data: [] };
 
-  const usersMap = new Map((users ?? []).map((u: { id: string; username: string; icon_url: string | null }) => [u.id, u]));
+  const usersMap = new Map((users ?? []).map((u: UserInfo) => [u.id, u]));
 
   // 各リストのアイテム数と達成数を取得
-  const listIds = (publicLists ?? []).map((l: { id: string }) => l.id);
+  const listIds = (publicLists ?? []).map((l: PublicList) => l.id);
   const { data: items } = listIds.length > 0
     ? await supabase.from("items").select("list_id, is_completed").in("list_id", listIds)
     : { data: [] };
 
   const statsMap = new Map<string, { total: number; completed: number }>();
-  (items ?? []).forEach((item: { list_id: string; is_completed: boolean }) => {
+  (items ?? []).forEach((item: ItemStat) => {
     const stat = statsMap.get(item.list_id) ?? { total: 0, completed: 0 };
     stat.total++;
     if (item.is_completed) stat.completed++;
@@ -65,7 +69,7 @@ export default async function Home() {
         <section>
           <h2 className="mb-4 text-xl font-semibold">みんなのリスト</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {publicLists.map((list: { id: string; user_id: string; updated_at: string }) => {
+            {publicLists.map((list: PublicList) => {
               const user = usersMap.get(list.user_id);
               const stat = statsMap.get(list.id) ?? { total: 0, completed: 0 };
               const percentage = stat.total > 0

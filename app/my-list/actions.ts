@@ -20,7 +20,17 @@ export async function toggleListVisibility(listId: string, isPublic: boolean) {
   revalidatePath("/my-list");
 }
 
-export async function addItem(listId: string, data: { title: string; description?: string; priority?: number }) {
+export async function addItem(listId: string, data: { title: string; description?: string; priority?: number; image_url?: string }) {
+  if (!data.title || data.title.trim().length === 0) {
+    throw new Error("タイトルは必須です");
+  }
+  if (data.title.length > 200) {
+    throw new Error("タイトルは200文字以内にしてください");
+  }
+  if (data.description && data.description.length > 2000) {
+    throw new Error("メモは2000文字以内にしてください");
+  }
+
   const supabase = await createClient();
 
   // 現在のアイテム数を取得して order を設定
@@ -34,6 +44,7 @@ export async function addItem(listId: string, data: { title: string; description
     title: data.title,
     description: data.description || null,
     priority: data.priority || null,
+    image_url: data.image_url || null,
     order: (count ?? 0) + 1,
   };
 
@@ -45,6 +56,16 @@ export async function addItem(listId: string, data: { title: string; description
 }
 
 export async function updateItem(itemId: string, data: ItemUpdate) {
+  if (data.title !== undefined && data.title?.trim().length === 0) {
+    throw new Error("タイトルは必須です");
+  }
+  if (data.title && data.title.length > 200) {
+    throw new Error("タイトルは200文字以内にしてください");
+  }
+  if (data.description && data.description.length > 2000) {
+    throw new Error("メモは2000文字以内にしてください");
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase

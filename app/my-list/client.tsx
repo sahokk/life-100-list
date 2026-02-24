@@ -5,6 +5,7 @@ import type { Database } from "@/types/database";
 import { addItem, toggleListVisibility } from "./actions";
 import ItemList from "@/components/item-list";
 import ItemForm from "@/components/item-form";
+import { useToast } from "@/components/toast";
 
 type ListRow = Database["public"]["Tables"]["lists"]["Row"];
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
@@ -17,6 +18,16 @@ type Props = {
 
 export default function MyListClient({ list, items, userId }: Props) {
   const [showForm, setShowForm] = useState(false);
+  const { showToast } = useToast();
+
+  async function handleToggleVisibility(checked: boolean) {
+    try {
+      await toggleListVisibility(list.id, checked);
+      showToast(checked ? "リストを公開しました" : "リストを非公開にしました");
+    } catch {
+      showToast("更新に失敗しました", "error");
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -28,11 +39,9 @@ export default function MyListClient({ list, items, userId }: Props) {
             <input
               type="checkbox"
               checked={list.is_public}
-              onChange={(e) =>
-                toggleListVisibility(list.id, e.target.checked)
-              }
+              onChange={(e) => handleToggleVisibility(e.target.checked)}
               className="rounded"
-            />
+            />{" "}
             公開
           </label>
         </div>
@@ -43,8 +52,14 @@ export default function MyListClient({ list, items, userId }: Props) {
         {showForm ? (
           <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
             <ItemForm
+              userId={userId}
               onSubmit={async (data) => {
-                await addItem(list.id, data);
+                try {
+                  await addItem(list.id, data);
+                  showToast("アイテムを追加しました");
+                } catch {
+                  showToast("追加に失敗しました", "error");
+                }
                 setShowForm(false);
               }}
               onCancel={() => setShowForm(false)}
