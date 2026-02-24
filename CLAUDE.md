@@ -44,7 +44,7 @@ npm run lint         # ESLint 実行
 
 ## 環境変数
 
-`.env.local` に設定 (テンプレート: `.env.local.example`):
+`.env.local` に設定 (テンプレート: `env.local.example`):
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=<Supabase プロジェクト URL>
