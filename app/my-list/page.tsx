@@ -1,4 +1,4 @@
-import { getMyList } from "./actions";
+import { getMyList } from "./queries";
 import MyListClient from "./client";
 
 export default async function MyListPage() {
