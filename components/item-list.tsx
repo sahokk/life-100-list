@@ -9,15 +9,24 @@ import {
 } from "@/app/my-list/actions";
 import ItemForm from "./item-form";
 import ConfirmDialog from "./confirm-dialog";
+import LikeButton from "./like-button";
 import { useToast } from "./toast";
 import Image from "next/image";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
+type LikeData = {
+  itemId: string;
+  count: number;
+  isLiked: boolean;
+};
+
 type ItemListProps = {
   items: ItemRow[];
   editable?: boolean;
   userId?: string;
+  likes?: LikeData[];
+  isLoggedIn?: boolean;
 };
 
 type FilterType = "all" | "incomplete" | "completed";
@@ -32,11 +41,15 @@ export default function ItemList({
   items,
   editable = false,
   userId,
+  likes = [],
+  isLoggedIn = false,
 }: ItemListProps) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { showToast } = useToast();
+
+  const likesMap = new Map(likes.map((l) => [l.itemId, l]));
 
   const filteredItems = items.filter((item) => {
     if (filter === "completed") return item.is_completed;
@@ -202,6 +215,21 @@ export default function ItemList({
                         達成日: {new Date(item.completed_at).toLocaleDateString("ja-JP")}
                       </p>
                     )}
+
+                    {/* いいねボタン */}
+                    {(() => {
+                      const like = likesMap.get(item.id);
+                      return (
+                        <div className="mt-2">
+                          <LikeButton
+                            itemId={item.id}
+                            likeCount={like?.count ?? 0}
+                            isLiked={like?.isLiked ?? false}
+                            disabled={!isLoggedIn}
+                          />
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* アクション */}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ItemList from "@/components/item-list";
+import { getLikesForItems } from "@/app/my-list/queries";
 import type { Database } from "@/types/database";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
@@ -53,6 +54,10 @@ export default async function ProfilePage({ params }: Props) {
     items = (data ?? []) as ItemRow[];
   }
 
+  const likes = await getLikesForItems(
+    items.map((i) => i.id),
+    currentUser?.id ?? null
+  );
   const completedCount = items.filter((i) => i.is_completed).length;
 
   return (
@@ -101,7 +106,7 @@ export default async function ProfilePage({ params }: Props) {
       <div className="mt-8">
         <h2 className="mb-4 text-lg font-semibold">やりたいことリスト</h2>
         {canViewList ? (
-          <ItemList items={items} />
+          <ItemList items={items} likes={likes} isLoggedIn={!!currentUser} />
         ) : list && !list.is_public ? (
           <p className="text-sm text-zinc-500">このリストは非公開です</p>
         ) : (

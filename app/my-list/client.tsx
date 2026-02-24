@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Database } from "@/types/database";
+import type { LikeData } from "./queries";
 import { addItem, toggleListVisibility } from "./actions";
 import ItemList from "@/components/item-list";
 import ItemForm from "@/components/item-form";
@@ -13,10 +14,11 @@ type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 type Props = {
   list: ListRow;
   items: ItemRow[];
+  likes: LikeData[];
   userId: string;
 };
 
-export default function MyListClient({ list, items, userId }: Props) {
+export default function MyListClient({ list, items, likes, userId }: Props) {
   const [showForm, setShowForm] = useState(false);
   const { showToast } = useToast();
 
@@ -76,7 +78,7 @@ export default function MyListClient({ list, items, userId }: Props) {
       </div>
 
       {/* アイテム一覧 */}
-      <ItemList items={items} editable userId={userId} />
+      <ItemList items={items} editable userId={userId} likes={likes} isLoggedIn />
     </div>
   );
 }

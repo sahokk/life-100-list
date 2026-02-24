@@ -1,6 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
+export type LikeData = {
+  itemId: string;
+  count: number;
+  isLiked: boolean;
+};
+
+export async function getLikesForItems(
+  itemIds: string[],
+  currentUserId: string | null
+): Promise<LikeData[]> {
+  if (itemIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data: likes } = await supabase
+    .from("likes")
+    .select("item_id, user_id")
+    .in("item_id", itemIds);
+
+  // アイテムごとのいいね数と自分がいいね済みかを計算
+  const countMap = new Map<string, { count: number; isLiked: boolean }>();
+  (likes ?? []).forEach((like: { item_id: string; user_id: string }) => {
+    const entry = countMap.get(like.item_id) ?? { count: 0, isLiked: false };
+    entry.count++;
+    if (like.user_id === currentUserId) entry.isLiked = true;
+    countMap.set(like.item_id, entry);
+  });
+
+  return itemIds.map((id) => ({
+    itemId: id,
+    count: countMap.get(id)?.count ?? 0,
+    isLiked: countMap.get(id)?.isLiked ?? false,
+  }));
+}
+
 export async function getOrCreateList() {
   const supabase = await createClient();
   const {
@@ -44,9 +78,16 @@ export async function getMyList() {
     .order("order", { ascending: true })
     .order("created_at", { ascending: true });
 
+  const typedItems = (items ?? []) as Database["public"]["Tables"]["items"]["Row"][];
+  const likes = await getLikesForItems(
+    typedItems.map((i) => i.id),
+    userId
+  );
+
   return {
     list,
-    items: (items ?? []) as Database["public"]["Tables"]["items"]["Row"][],
+    items: typedItems,
+    likes,
     userId,
   };
 }
