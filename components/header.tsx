@@ -41,6 +41,12 @@ export default function Header() {
         </Link>
 
         <nav className="flex items-center gap-4">
+          <Link
+            href="/search"
+            className="text-sm hover:text-blue-600"
+          >
+            検索
+          </Link>
           {loading ? (
             <div className="h-8 w-20 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
           ) : user ? (
