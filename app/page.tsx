@@ -1,45 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-
-type PublicList = { id: string; user_id: string; is_public: boolean; updated_at: string };
-type UserInfo = { id: string; username: string; icon_url: string | null };
-type ItemStat = { list_id: string; is_completed: boolean };
+import Image from "next/image";
+import { getFollowingFeed, getDiscoverUsers } from "./page-queries";
+import HomeClient from "./page-client";
 
 export default async function Home() {
   const supabase = await createClient();
 
-  // 公開リストを持つユーザーを最新順で取得
-  const { data: publicLists } = await supabase
-    .from("lists")
-    .select("id, user_id, is_public, updated_at")
-    .eq("is_public", true)
-    .order("updated_at", { ascending: false })
-    .limit(20);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // ユーザー情報を取得
-  const userIds = [...new Set((publicLists ?? []).map((l: PublicList) => l.user_id))];
-  const { data: users } = userIds.length > 0
-    ? await supabase.from("users").select("id, username, icon_url").in("id", userIds)
-    : { data: [] };
+  // ログイン済み: フィード表示
+  if (user) {
+    const [feedUsers, discoverUsers] = await Promise.all([
+      getFollowingFeed(user.id),
+      getDiscoverUsers(),
+    ]);
 
-  const usersMap = new Map((users ?? []).map((u: UserInfo) => [u.id, u]));
+    return <HomeClient feedUsers={feedUsers} discoverUsers={discoverUsers} />;
+  }
 
-  // 各リストのアイテム数と達成数を取得
-  const listIds = (publicLists ?? []).map((l: PublicList) => l.id);
-  const { data: items } = listIds.length > 0
-    ? await supabase.from("items").select("list_id, is_completed").in("list_id", listIds)
-    : { data: [] };
-
-  const statsMap = new Map<string, { total: number; completed: number }>();
-  (items ?? []).forEach((item: ItemStat) => {
-    const stat = statsMap.get(item.list_id) ?? { total: 0, completed: 0 };
-    stat.total++;
-    if (item.is_completed) stat.completed++;
-    statsMap.set(item.list_id, stat);
-  });
+  // 未ログイン: ランディングページ
+  const discoverUsers = await getDiscoverUsers();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-10">
       {/* ヒーロー */}
       <section className="mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-tight">
@@ -51,13 +37,13 @@ export default async function Home() {
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/register"
-            className="rounded-md bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700"
+            className="rounded-lg bg-blue-600 px-6 py-2.5 text-white shadow-sm hover:bg-blue-700"
           >
             はじめる
           </Link>
           <Link
             href="/login"
-            className="rounded-md border border-zinc-300 px-6 py-2.5 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-300 px-6 py-2.5 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             ログイン
           </Link>
@@ -65,34 +51,48 @@ export default async function Home() {
       </section>
 
       {/* 公開リスト一覧 */}
-      {publicLists && publicLists.length > 0 && (
+      {discoverUsers.length > 0 && (
         <section>
           <h2 className="mb-4 text-xl font-semibold">みんなのリスト</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {publicLists.map((list: PublicList) => {
-              const user = usersMap.get(list.user_id);
-              const stat = statsMap.get(list.id) ?? { total: 0, completed: 0 };
-              const percentage = stat.total > 0
-                ? Math.round((stat.completed / stat.total) * 100)
-                : 0;
+          <div className="grid gap-3 sm:grid-cols-2">
+            {discoverUsers.map((u) => {
+              const percentage =
+                u.itemCount > 0
+                  ? Math.round((u.completedCount / u.itemCount) * 100)
+                  : 0;
 
               return (
                 <Link
-                  key={list.id}
-                  href={`/profile/${list.user_id}`}
-                  className="block rounded-lg border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                  key={u.userId}
+                  href={`/profile/${u.userId}`}
+                  className="flex items-center gap-4 rounded-xl border border-zinc-200 p-4 transition-shadow hover:shadow-md dark:border-zinc-800"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-lg dark:bg-zinc-700">
-                      👤
+                  {u.iconUrl ? (
+                    <Image
+                      src={u.iconUrl}
+                      alt={u.username}
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
+                      style={{ width: 48, height: 48 }}
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-lg font-bold text-blue-600 dark:from-blue-900 dark:to-blue-800 dark:text-blue-300">
+                      {u.username.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-medium">
-                        {user?.username ?? "ユーザー"}
-                      </p>
-                      <p className="text-sm text-zinc-500">
-                        {stat.total}個 / 達成率 {percentage}%
-                      </p>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{u.username}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                        <div
+                          className="h-full rounded-full bg-blue-600"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <span className="shrink-0 text-xs text-zinc-500">
+                        {u.completedCount}/{u.itemCount}
+                      </span>
                     </div>
                   </div>
                 </Link>
