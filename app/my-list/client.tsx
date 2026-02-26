@@ -1,84 +1,148 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import type { Database } from "@/types/database";
-import type { LikeData } from "./queries";
-import { addItem, toggleListVisibility } from "./actions";
-import ItemList from "@/components/item-list";
-import ItemForm from "@/components/item-form";
-import { useToast } from "@/components/toast";
 
-type ListRow = Database["public"]["Tables"]["lists"]["Row"];
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
 type Props = {
-  list: ListRow;
-  items: ItemRow[];
-  likes: LikeData[];
   userId: string;
+  totalCount: number;
+  completedCount: number;
+  recentlyCompleted: ItemRow[];
+  recentlyAdded: ItemRow[];
+  followerCount: number;
+  totalLikes: number;
+  isPublic: boolean;
 };
 
-export default function MyListClient({ list, items, likes, userId }: Props) {
-  const [showForm, setShowForm] = useState(false);
-  const { showToast } = useToast();
-
-  async function handleToggleVisibility(checked: boolean) {
-    try {
-      await toggleListVisibility(list.id, checked);
-      showToast(checked ? "リストを公開しました" : "リストを非公開にしました");
-    } catch {
-      showToast("更新に失敗しました", "error");
-    }
-  }
+export default function DashboardClient({
+  userId,
+  totalCount,
+  completedCount,
+  recentlyCompleted,
+  recentlyAdded,
+  followerCount,
+  totalLikes,
+  isPublic,
+}: Props) {
+  const percentage =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">マイリスト</h1>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={list.is_public}
-              onChange={(e) => handleToggleVisibility(e.target.checked)}
-              className="rounded"
-            />{" "}
-            公開
-          </label>
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <h1 className="mb-8 text-2xl font-bold tracking-tight">
+        マイダッシュボード
+      </h1>
+
+      {/* 統計カード */}
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <p className="text-sm text-zinc-500">達成率</p>
+          <p className="mt-1 text-2xl font-bold">{percentage}%</p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <p className="text-sm text-zinc-500">アイテム</p>
+          <p className="mt-1 text-2xl font-bold">
+            {completedCount}
+            <span className="text-base font-normal text-zinc-400">
+              {" "}
+              / {totalCount}
+            </span>
+          </p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <p className="text-sm text-zinc-500">フォロワー</p>
+          <p className="mt-1 text-2xl font-bold">{followerCount}</p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <p className="text-sm text-zinc-500">いいね</p>
+          <p className="mt-1 text-2xl font-bold">{totalLikes}</p>
         </div>
       </div>
 
-      {/* アイテム追加 */}
-      <div className="mb-6">
-        {showForm ? (
-          <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-            <ItemForm
-              userId={userId}
-              onSubmit={async (data) => {
-                try {
-                  await addItem(list.id, data);
-                  showToast("アイテムを追加しました");
-                } catch {
-                  showToast("追加に失敗しました", "error");
-                }
-                setShowForm(false);
-              }}
-              onCancel={() => setShowForm(false)}
-            />
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-full rounded-lg border-2 border-dashed border-zinc-300 py-3 text-sm text-zinc-500 hover:border-blue-400 hover:text-blue-600 dark:border-zinc-700 dark:hover:border-blue-500"
-          >
-            + やりたいことを追加
-          </button>
-        )}
+      {/* プログレスバー */}
+      <div className="mb-8">
+        <div className="mb-2 flex items-center justify-between text-sm">
+          <span className="text-zinc-600 dark:text-zinc-400">全体の進捗</span>
+          <span className="font-medium">
+            {completedCount} / {totalCount} 達成
+          </span>
+        </div>
+        <div className="h-3 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div
+            className="h-full rounded-full bg-blue-600 transition-all"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
       </div>
 
-      {/* アイテム一覧 */}
-      <ItemList items={items} editable userId={userId} likes={likes} isLoggedIn />
+      {/* 最近達成したこと */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold">最近達成したこと</h2>
+        {recentlyCompleted.length === 0 ? (
+          <p className="text-sm text-zinc-500">まだ達成したアイテムはありません</p>
+        ) : (
+          <ul className="space-y-2">
+            {recentlyCompleted.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600">✓</span>
+                  <span className="text-sm font-medium">{item.title}</span>
+                </div>
+                {item.completed_at && (
+                  <span className="text-xs text-zinc-400">
+                    {new Date(item.completed_at).toLocaleDateString("ja-JP")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* 最近追加したこと */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold">最近追加したこと</h2>
+        {recentlyAdded.length === 0 ? (
+          <p className="text-sm text-zinc-500">まだアイテムがありません</p>
+        ) : (
+          <ul className="space-y-2">
+            {recentlyAdded.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+              >
+                <span className="text-sm font-medium">{item.title}</span>
+                <span className="text-xs text-zinc-400">
+                  {new Date(item.created_at).toLocaleDateString("ja-JP")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* プロフィールへのリンク */}
+      <div className="rounded-xl border border-zinc-200 p-5 text-center dark:border-zinc-800">
+        <p className="mb-3 text-sm text-zinc-500">
+          リストの管理はプロフィールページから行えます
+        </p>
+        <Link
+          href={`/profile/${userId}`}
+          className="inline-block rounded-lg bg-blue-600 px-6 py-2 text-sm text-white shadow-sm hover:bg-blue-700"
+        >
+          プロフィールでリストを管理する →
+        </Link>
+        {!isPublic && (
+          <p className="mt-2 text-xs text-zinc-400">
+            リストは現在非公開です。プロフィールから公開設定を変更できます。
+          </p>
+        )}
+      </div>
     </div>
   );
 }

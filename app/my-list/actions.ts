@@ -18,6 +18,7 @@ export async function toggleListVisibility(listId: string, isPublic: boolean) {
   if (error) throw new Error("更新に失敗しました");
 
   revalidatePath("/my-list");
+  revalidatePath("/profile");
 }
 
 export async function addItem(listId: string, data: { title: string; description?: string; priority?: number; image_url?: string }) {
@@ -53,6 +54,7 @@ export async function addItem(listId: string, data: { title: string; description
   if (error) throw new Error("アイテムの追加に失敗しました");
 
   revalidatePath("/my-list");
+  revalidatePath("/profile");
 }
 
 export async function updateItem(itemId: string, data: ItemUpdate) {
@@ -76,6 +78,7 @@ export async function updateItem(itemId: string, data: ItemUpdate) {
   if (error) throw new Error("アイテムの更新に失敗しました");
 
   revalidatePath("/my-list");
+  revalidatePath("/profile");
 }
 
 export async function toggleItemCompleted(itemId: string, isCompleted: boolean) {
@@ -94,6 +97,7 @@ export async function toggleItemCompleted(itemId: string, isCompleted: boolean) 
   if (error) throw new Error("更新に失敗しました");
 
   revalidatePath("/my-list");
+  revalidatePath("/profile");
 }
 
 export async function deleteItem(itemId: string) {
@@ -107,6 +111,7 @@ export async function deleteItem(itemId: string) {
   if (error) throw new Error("削除に失敗しました");
 
   revalidatePath("/my-list");
+  revalidatePath("/profile");
 }
 
 export async function updateItemImage(itemId: string, imageUrl: string | null) {
@@ -120,4 +125,5 @@ export async function updateItemImage(itemId: string, imageUrl: string | null) {
   if (error) throw new Error("画像の更新に失敗しました");
 
   revalidatePath("/my-list");
+  revalidatePath("/profile");
 }

@@ -1,11 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import ItemList from "@/components/item-list";
-import FollowButton from "@/components/follow-button";
 import { getLikesForItems } from "@/app/my-list/queries";
 import type { Database } from "@/types/database";
+import ProfileClient from "./client";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
@@ -34,10 +31,17 @@ export default async function ProfilePage({ params }: Props) {
   const isOwner = currentUser?.id === userId;
 
   // フォロー情報を取得
-  const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
-    supabase.from("follows").select("*", { count: "exact", head: true }).eq("followee_id", userId),
-    supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", userId),
-  ]);
+  const [{ count: followerCount }, { count: followingCount }] =
+    await Promise.all([
+      supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("followee_id", userId),
+      supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", userId),
+    ]);
 
   let isFollowing = false;
   if (currentUser && !isOwner) {
@@ -50,14 +54,12 @@ export default async function ProfilePage({ params }: Props) {
     isFollowing = !!followRow;
   }
 
-  // 公開リスト (本人の場合は非公開でも表示)
-  const listQuery = supabase
+  // リストを取得 (本人の場合は非公開でも表示)
+  const { data: list } = await supabase
     .from("lists")
     .select("*")
     .eq("user_id", userId)
     .single();
-
-  const { data: list } = await listQuery;
 
   const canViewList = list && (list.is_public || isOwner);
 
@@ -76,68 +78,18 @@ export default async function ProfilePage({ params }: Props) {
     items.map((i) => i.id),
     currentUser?.id ?? null
   );
-  const completedCount = items.filter((i) => i.is_completed).length;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <div className="flex items-start gap-6">
-        {profile.icon_url ? (
-          <Image
-            src={profile.icon_url}
-            alt={profile.username}
-            width={96}
-            height={96}
-            className="rounded-full object-cover"
-            style={{ width: 96, height: 96 }}
-          />
-        ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-200 text-3xl text-zinc-500 dark:bg-zinc-700">
-            👤
-          </div>
-        )}
-
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{profile.username}</h1>
-            {isOwner && (
-              <Link
-                href="/settings/profile"
-                className="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-              >
-                編集
-              </Link>
-            )}
-            {!isOwner && currentUser && (
-              <FollowButton targetUserId={userId} isFollowing={isFollowing} />
-            )}
-          </div>
-          <div className="mt-2 flex gap-4 text-sm text-zinc-500">
-            <span><strong className="text-zinc-700 dark:text-zinc-300">{followingCount ?? 0}</strong> フォロー中</span>
-            <span><strong className="text-zinc-700 dark:text-zinc-300">{followerCount ?? 0}</strong> フォロワー</span>
-          </div>
-          {profile.bio && (
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-              {profile.bio}
-            </p>
-          )}
-          {canViewList && (
-            <p className="mt-2 text-sm text-zinc-500">
-              {completedCount} / {items.length} 達成
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold">やりたいことリスト</h2>
-        {canViewList ? (
-          <ItemList items={items} likes={likes} isLoggedIn={!!currentUser} />
-        ) : list && !list.is_public ? (
-          <p className="text-sm text-zinc-500">このリストは非公開です</p>
-        ) : (
-          <p className="text-sm text-zinc-500">まだリストがありません</p>
-        )}
-      </div>
-    </div>
+    <ProfileClient
+      profile={profile}
+      list={list}
+      items={items}
+      likes={likes}
+      isOwner={isOwner}
+      isLoggedIn={!!currentUser}
+      isFollowing={isFollowing}
+      followerCount={followerCount ?? 0}
+      followingCount={followingCount ?? 0}
+    />
   );
 }
