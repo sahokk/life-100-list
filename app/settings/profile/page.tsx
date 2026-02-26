@@ -57,28 +57,28 @@ export default function ProfileSettingsPage() {
     if (error) {
       setMessage("保存に失敗しました");
     } else {
-      setMessage("プロフィールを更新しました");
-      router.refresh();
+      router.push(`/profile/${userId}`);
+      return;
     }
     setSaving(false);
   }
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="mx-auto max-w-2xl px-4 py-10">
         <p className="text-zinc-500">読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-8 text-2xl font-bold">プロフィール編集</h1>
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <h1 className="mb-8 text-2xl font-bold tracking-tight">プロフィール編集</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {message && (
           <div
-            className={`rounded-md p-4 text-sm ${
+            className={`rounded-lg p-4 text-sm ${
               message.includes("失敗")
                 ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
                 : "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
@@ -108,7 +108,7 @@ export default function ProfileSettingsPage() {
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
           />
         </div>
 
@@ -121,7 +121,7 @@ export default function ProfileSettingsPage() {
             rows={4}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
             placeholder="自己紹介を入力..."
           />
         </div>
@@ -129,7 +129,7 @@ export default function ProfileSettingsPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {saving ? "保存中..." : "保存"}
         </button>
