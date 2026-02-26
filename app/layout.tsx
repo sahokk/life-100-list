@@ -31,7 +31,10 @@ export default function RootLayout({
       >
         <ToastProvider>
           <Header />
-          <main>{children}</main>
+          <main className="min-h-[calc(100vh-3.5rem-3rem)]">{children}</main>
+          <footer className="border-t border-zinc-200 py-4 text-center text-xs text-zinc-400 dark:border-zinc-800">
+            &copy; {new Date().getFullYear()} 人生100リスト
+          </footer>
         </ToastProvider>
       </body>
     </html>

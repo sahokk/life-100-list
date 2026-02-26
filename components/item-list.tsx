@@ -115,7 +115,7 @@ export default function ItemList({
           {filteredItems.map((item) => (
             <li
               key={item.id}
-              className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+              className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
             >
               {editingId === item.id ? (
                 <ItemForm

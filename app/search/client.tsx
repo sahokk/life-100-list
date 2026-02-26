@@ -40,8 +40,8 @@ export default function SearchClient({ query, activeTab, users, items }: Props) 
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">検索</h1>
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">検索</h1>
 
       {/* 検索フォーム */}
       <form onSubmit={handleSearch} className="mb-6">
@@ -51,12 +51,12 @@ export default function SearchClient({ query, activeTab, users, items }: Props) 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="ユーザー名やキーワードで検索..."
-            className="flex-1 rounded-md border border-zinc-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
+            className="flex-1 rounded-lg border border-zinc-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900"
           />
           <button
             type="submit"
             disabled={!input.trim()}
-            className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
           >
             検索
           </button>
