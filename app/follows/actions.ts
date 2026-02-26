@@ -31,6 +31,25 @@ export async function toggleFollow(targetUserId: string) {
       .from("follows")
       .insert({ follower_id: user.id, followee_id: targetUserId });
     if (error) throw new Error("フォローに失敗しました");
+
+    // フォロー通知を送信（重複防止: 24時間以内の同一通知をスキップ）
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: existingNotif } = await supabase
+      .from("notifications")
+      .select("id")
+      .eq("user_id", targetUserId)
+      .eq("type", "follow")
+      .eq("related_user_id", user.id)
+      .gte("created_at", oneDayAgo)
+      .maybeSingle();
+
+    if (!existingNotif) {
+      await supabase.from("notifications").insert({
+        user_id: targetUserId,
+        type: "follow",
+        related_user_id: user.id,
+      });
+    }
   }
 
   revalidatePath(`/profile/${targetUserId}`);

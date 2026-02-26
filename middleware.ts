@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // 未ログインユーザーを保護ルートからリダイレクト
-  const protectedPaths = ["/my-list", "/settings"];
+  const protectedPaths = ["/my-list", "/settings", "/notifications"];
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
