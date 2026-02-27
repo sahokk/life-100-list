@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Database } from "@/types/database";
+import AchievementHeatmap from "@/components/achievement-heatmap";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
@@ -14,6 +15,7 @@ type Props = {
   followerCount: number;
   totalLikes: number;
   isPublic: boolean;
+  achievementData: Record<string, number>;
 };
 
 export default function DashboardClient({
@@ -25,6 +27,7 @@ export default function DashboardClient({
   followerCount,
   totalLikes,
   isPublic,
+  achievementData,
 }: Props) {
   const percentage =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -76,6 +79,17 @@ export default function DashboardClient({
           />
         </div>
       </div>
+
+      {/* 達成カレンダー */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold">達成カレンダー</h2>
+        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <AchievementHeatmap
+            data={achievementData}
+            initialYear={new Date().getFullYear()}
+          />
+        </div>
+      </section>
 
       {/* 最近達成したこと */}
       <section className="mb-8">

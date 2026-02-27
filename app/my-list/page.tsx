@@ -33,6 +33,15 @@ export default async function MyListPage() {
   // 最近追加したアイテム (直近5件)
   const recentlyAdded = typedItems.slice(0, 5);
 
+  // 達成カレンダーデータ (日ごとの達成数)
+  const achievementData: Record<string, number> = {};
+  typedItems
+    .filter((i) => i.is_completed && i.completed_at)
+    .forEach((i) => {
+      const dateStr = new Date(i.completed_at!).toISOString().split("T")[0];
+      achievementData[dateStr] = (achievementData[dateStr] ?? 0) + 1;
+    });
+
   // フォロワー数
   const { count: followerCount } = await supabase
     .from("follows")
@@ -60,6 +69,7 @@ export default async function MyListPage() {
       followerCount={followerCount ?? 0}
       totalLikes={totalLikes}
       isPublic={list.is_public}
+      achievementData={achievementData}
     />
   );
 }
