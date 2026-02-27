@@ -6,9 +6,11 @@ import {
   toggleItemCompleted,
   deleteItem,
   updateItem,
+  updateCompletedAt,
 } from "@/app/my-list/actions";
 import ItemForm from "./item-form";
 import ConfirmDialog from "./confirm-dialog";
+import DatePickerDialog from "./date-picker-dialog";
 import LikeButton from "./like-button";
 import { useToast } from "./toast";
 import Image from "next/image";
@@ -47,6 +49,7 @@ export default function ItemList({
   const [filter, setFilter] = useState<FilterType>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [dateEditingItem, setDateEditingItem] = useState<ItemRow | null>(null);
   const { showToast } = useToast();
 
   const likesMap = new Map(likes.map((l) => [l.itemId, l]));
@@ -77,6 +80,17 @@ export default function ItemList({
     } catch {
       showToast("更新に失敗しました", "error");
     }
+  }
+
+  async function handleDateChange(date: string) {
+    if (!dateEditingItem) return;
+    try {
+      await updateCompletedAt(dateEditingItem.id, date);
+      showToast("達成日を更新しました");
+    } catch {
+      showToast("更新に失敗しました", "error");
+    }
+    setDateEditingItem(null);
   }
 
   return (
@@ -196,6 +210,14 @@ export default function ItemList({
                     {item.completed_at && (
                       <p className="mt-1 text-xs text-zinc-400">
                         達成日: {new Date(item.completed_at).toLocaleDateString("ja-JP")}
+                        {editable && (
+                          <button
+                            onClick={() => setDateEditingItem(item)}
+                            className="ml-1 text-blue-500 hover:text-blue-700 hover:underline"
+                          >
+                            変更
+                          </button>
+                        )}
                       </p>
                     )}
 
@@ -264,6 +286,14 @@ export default function ItemList({
         message="このアイテムを削除しますか？この操作は取り消せません。"
         onConfirm={handleDelete}
         onCancel={() => setDeletingId(null)}
+      />
+
+      {/* 達成日編集ダイアログ */}
+      <DatePickerDialog
+        open={!!dateEditingItem}
+        currentDate={dateEditingItem?.completed_at ?? null}
+        onConfirm={handleDateChange}
+        onCancel={() => setDateEditingItem(null)}
       />
     </div>
   );

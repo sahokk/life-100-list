@@ -114,6 +114,20 @@ export async function deleteItem(itemId: string) {
   revalidatePath("/profile");
 }
 
+export async function updateCompletedAt(itemId: string, date: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("items")
+    .update({ completed_at: new Date(date).toISOString() })
+    .eq("id", itemId);
+
+  if (error) throw new Error("達成日の更新に失敗しました");
+
+  revalidatePath("/my-list");
+  revalidatePath("/profile");
+}
+
 export async function updateItemImage(itemId: string, imageUrl: string | null) {
   const supabase = await createClient();
 
