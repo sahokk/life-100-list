@@ -54,12 +54,21 @@ export default async function ProfilePage({ params }: Props) {
     isFollowing = !!followRow;
   }
 
-  // リストを取得 (本人の場合は非公開でも表示)
-  const { data: list } = await supabase
+  // リストを取得 (本人の場合は非公開でも表示、未作成なら自動作成)
+  let { data: list } = await supabase
     .from("lists")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (!list && isOwner) {
+    const { data: newList } = await supabase
+      .from("lists")
+      .insert({ user_id: userId, is_public: false })
+      .select()
+      .single();
+    list = newList;
+  }
 
   const canViewList = list && (list.is_public || isOwner);
 
