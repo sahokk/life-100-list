@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Database } from "@/types/database";
-import AchievementHeatmap from "@/components/achievement-heatmap";
+import AchievementTimeline from "@/components/achievement-timeline";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
@@ -10,24 +10,22 @@ type Props = {
   userId: string;
   totalCount: number;
   completedCount: number;
-  recentlyCompleted: ItemRow[];
+  completedItems: ItemRow[];
   recentlyAdded: ItemRow[];
   followerCount: number;
   totalLikes: number;
   isPublic: boolean;
-  achievementData: Record<string, number>;
 };
 
 export default function DashboardClient({
   userId,
   totalCount,
   completedCount,
-  recentlyCompleted,
+  completedItems,
   recentlyAdded,
   followerCount,
   totalLikes,
   isPublic,
-  achievementData,
 }: Props) {
   const percentage =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -80,44 +78,18 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* 達成カレンダー */}
+      {/* 達成タイムライン */}
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">達成カレンダー</h2>
-        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <AchievementHeatmap
-            data={achievementData}
-            initialYear={new Date().getFullYear()}
-          />
-        </div>
-      </section>
-
-      {/* 最近達成したこと */}
-      <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">最近達成したこと</h2>
-        {recentlyCompleted.length === 0 ? (
-          <p className="text-sm text-zinc-500">まだ達成したアイテムはありません</p>
-        ) : (
-          <ul className="space-y-2">
-            {recentlyCompleted.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    達成！
-                  </span>
-                  <span className="text-sm font-medium">{item.title}</span>
-                </div>
-                {item.completed_at && (
-                  <span className="text-xs text-zinc-400">
-                    {new Date(item.completed_at).toLocaleDateString("ja-JP")}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        <h2 className="mb-3 text-lg font-semibold">達成タイムライン</h2>
+        <AchievementTimeline
+          items={completedItems
+            .filter((i) => i.completed_at)
+            .map((i) => ({
+              id: i.id,
+              title: i.title,
+              completed_at: i.completed_at!,
+            }))}
+        />
       </section>
 
       {/* 最近追加したこと */}

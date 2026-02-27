@@ -20,27 +20,17 @@ export default async function MyListPage() {
   const totalCount = typedItems.length;
   const completedCount = typedItems.filter((i) => i.is_completed).length;
 
-  // 最近達成したアイテム (直近5件)
-  const recentlyCompleted = typedItems
+  // 達成済みアイテム (全件、新しい順)
+  const completedItems = typedItems
     .filter((i) => i.is_completed && i.completed_at)
     .sort(
       (a, b) =>
         new Date(b.completed_at!).getTime() -
         new Date(a.completed_at!).getTime()
-    )
-    .slice(0, 5);
+    );
 
   // 最近追加したアイテム (直近5件)
   const recentlyAdded = typedItems.slice(0, 5);
-
-  // 達成カレンダーデータ (日ごとの達成数)
-  const achievementData: Record<string, number> = {};
-  typedItems
-    .filter((i) => i.is_completed && i.completed_at)
-    .forEach((i) => {
-      const dateStr = new Date(i.completed_at!).toISOString().split("T")[0];
-      achievementData[dateStr] = (achievementData[dateStr] ?? 0) + 1;
-    });
 
   // フォロワー数
   const { count: followerCount } = await supabase
@@ -64,12 +54,11 @@ export default async function MyListPage() {
       userId={userId}
       totalCount={totalCount}
       completedCount={completedCount}
-      recentlyCompleted={recentlyCompleted}
+      completedItems={completedItems}
       recentlyAdded={recentlyAdded}
       followerCount={followerCount ?? 0}
       totalLikes={totalLikes}
       isPublic={list.is_public}
-      achievementData={achievementData}
     />
   );
 }
