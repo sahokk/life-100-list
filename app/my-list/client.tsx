@@ -90,7 +90,9 @@ export default function DashboardClient({
                 className="flex items-center justify-between rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-600">✓</span>
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    達成！
+                  </span>
                   <span className="text-sm font-medium">{item.title}</span>
                 </div>
                 {item.completed_at && (

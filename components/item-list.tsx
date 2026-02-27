@@ -115,7 +115,11 @@ export default function ItemList({
           {filteredItems.map((item) => (
             <li
               key={item.id}
-              className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+              className={`rounded-xl border border-zinc-200 p-4 dark:border-zinc-800 ${
+                item.is_completed
+                  ? "bg-green-50 dark:bg-green-950/20"
+                  : ""
+              }`}
             >
               {editingId === item.id ? (
                 <ItemForm
@@ -145,38 +149,17 @@ export default function ItemList({
                 />
               ) : (
                 <div className="flex items-start gap-3">
-                  {/* チェックボックス */}
-                  {editable && (
-                    <button
-                      onClick={() =>
-                        handleToggle(item.id, !item.is_completed)
-                      }
-                      className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border ${
-                        item.is_completed
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-zinc-300 dark:border-zinc-600"
-                      }`}
-                    >
-                      {item.is_completed && (
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                  )}
-
                   {/* コンテンツ */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`font-medium ${
-                          item.is_completed
-                            ? "text-zinc-400 line-through"
-                            : ""
-                        }`}
-                      >
+                      <span className="font-medium">
                         {item.title}
                       </span>
+                      {item.is_completed && (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          達成！
+                        </span>
+                      )}
                       {item.priority && item.priority > 0 && (
                         <span
                           className={`rounded px-1.5 py-0.5 text-xs ${
@@ -234,7 +217,19 @@ export default function ItemList({
 
                   {/* アクション */}
                   {editable && (
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() =>
+                          handleToggle(item.id, !item.is_completed)
+                        }
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                          item.is_completed
+                            ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                            : "bg-zinc-100 text-zinc-600 hover:bg-blue-100 hover:text-blue-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+                        }`}
+                      >
+                        {item.is_completed ? "未達成に戻す" : "達成にする"}
+                      </button>
                       <button
                         onClick={() => setEditingId(item.id)}
                         className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
