@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Database } from "@/types/database";
 import AchievementTimeline from "@/components/achievement-timeline";
+import TagProgress from "@/components/tag-progress";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
 
@@ -16,6 +17,7 @@ type Props = {
   followerCount: number;
   totalLikes: number;
   isPublic: boolean;
+  tagStats: { name: string; completed: number; total: number }[];
 };
 
 export default function DashboardClient({
@@ -28,6 +30,7 @@ export default function DashboardClient({
   followerCount,
   totalLikes,
   isPublic,
+  tagStats,
 }: Props) {
   const percentage =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -79,6 +82,14 @@ export default function DashboardClient({
           />
         </div>
       </div>
+
+      {/* タグ別進捗 */}
+      {tagStats.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold">タグ別の進捗</h2>
+          <TagProgress stats={tagStats} />
+        </section>
+      )}
 
       {/* 期限が近いアイテム */}
       {upcomingDeadlines.length > 0 && (

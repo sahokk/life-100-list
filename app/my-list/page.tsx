@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateList } from "./queries";
+import { getOrCreateList, getTagsForUser, getItemTags } from "./queries";
 import DashboardClient from "./client";
 import type { Database } from "@/types/database";
 
@@ -61,6 +61,25 @@ export default async function MyListPage() {
     totalLikes = count ?? 0;
   }
 
+  // タグ別進捗
+  const [tags, itemTagsList] = await Promise.all([
+    getTagsForUser(userId),
+    getItemTags(itemIds),
+  ]);
+  const itemTagsMap = new Map(itemTagsList.map((t) => [t.itemId, t.tagIds]));
+  const tagsMap = new Map(tags.map((t) => [t.id, t.name]));
+  const tagStatsMap = new Map<string, { name: string; completed: number; total: number }>();
+  for (const item of typedItems) {
+    const tagIds = itemTagsMap.get(item.id) ?? [];
+    for (const tagId of tagIds) {
+      const existing = tagStatsMap.get(tagId) ?? { name: tagsMap.get(tagId) ?? "", completed: 0, total: 0 };
+      existing.total++;
+      if (item.is_completed) existing.completed++;
+      tagStatsMap.set(tagId, existing);
+    }
+  }
+  const tagStats = Array.from(tagStatsMap.values()).sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
   return (
     <DashboardClient
       userId={userId}
@@ -72,6 +91,7 @@ export default async function MyListPage() {
       followerCount={followerCount ?? 0}
       totalLikes={totalLikes}
       isPublic={list.is_public}
+      tagStats={tagStats}
     />
   );
 }
