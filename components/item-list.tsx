@@ -7,6 +7,7 @@ import {
   deleteItem,
   updateItem,
   updateCompletedAt,
+  updateItemTags,
 } from "@/app/my-list/actions";
 import ItemForm from "./item-form";
 import ConfirmDialog from "./confirm-dialog";
@@ -23,12 +24,25 @@ type LikeData = {
   isLiked: boolean;
 };
 
+type TagOption = {
+  id: string;
+  name: string;
+  is_preset: boolean;
+};
+
+type ItemTagData = {
+  itemId: string;
+  tagIds: string[];
+};
+
 type ItemListProps = {
   items: ItemRow[];
   editable?: boolean;
   userId?: string;
   likes?: LikeData[];
   isLoggedIn?: boolean;
+  availableTags?: TagOption[];
+  itemTags?: ItemTagData[];
 };
 
 type FilterType = "all" | "incomplete" | "completed";
@@ -45,18 +59,31 @@ export default function ItemList({
   userId,
   likes = [],
   isLoggedIn = false,
+  availableTags = [],
+  itemTags = [],
 }: ItemListProps) {
   const [filter, setFilter] = useState<FilterType>("all");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [dateEditingItem, setDateEditingItem] = useState<ItemRow | null>(null);
   const { showToast } = useToast();
 
   const likesMap = new Map(likes.map((l) => [l.itemId, l]));
+  const itemTagsMap = new Map(itemTags.map((t) => [t.itemId, t.tagIds]));
+  const tagsMap = new Map(availableTags.map((t) => [t.id, t]));
+
+  // Collect tags that are actually used by items
+  const usedTagIds = new Set<string>();
+  itemTags.forEach((it) => it.tagIds.forEach((id) => usedTagIds.add(id)));
 
   const filteredItems = items.filter((item) => {
-    if (filter === "completed") return item.is_completed;
-    if (filter === "incomplete") return !item.is_completed;
+    if (filter === "completed" && !item.is_completed) return false;
+    if (filter === "incomplete" && item.is_completed) return false;
+    if (tagFilter) {
+      const tags = itemTagsMap.get(item.id) ?? [];
+      if (!tags.includes(tagFilter)) return false;
+    }
     return true;
   });
 
@@ -117,6 +144,37 @@ export default function ItemList({
         </div>
       </div>
 
+      {/* タグフィルタ */}
+      {usedTagIds.size > 0 && (
+        <div className="mb-4 flex flex-wrap gap-1">
+          <button
+            onClick={() => setTagFilter(null)}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              tagFilter === null
+                ? "bg-blue-600 text-white"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+            }`}
+          >
+            全タグ
+          </button>
+          {availableTags
+            .filter((t) => usedTagIds.has(t.id))
+            .map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => setTagFilter(tagFilter === tag.id ? null : tag.id)}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  tagFilter === tag.id
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                }`}
+              >
+                {tag.name}
+              </button>
+            ))}
+        </div>
+      )}
+
       {/* アイテム一覧 */}
       {filteredItems.length === 0 ? (
         <p className="py-8 text-center text-sm text-zinc-500">
@@ -145,6 +203,8 @@ export default function ItemList({
                   }}
                   userId={userId}
                   submitLabel="更新"
+                  availableTags={availableTags}
+                  initialTagIds={itemTagsMap.get(item.id) ?? []}
                   onSubmit={async (data) => {
                     try {
                       await updateItem(item.id, {
@@ -153,6 +213,9 @@ export default function ItemList({
                         priority: data.priority ?? null,
                         image_url: data.image_url ?? null,
                       });
+                      if (data.tag_ids) {
+                        await updateItemTags(item.id, data.tag_ids);
+                      }
                       showToast("アイテムを更新しました");
                     } catch {
                       showToast("更新に失敗しました", "error");
@@ -188,6 +251,32 @@ export default function ItemList({
                         </span>
                       )}
                     </div>
+
+                    {/* タグバッジ */}
+                    {(() => {
+                      const tagIds = itemTagsMap.get(item.id) ?? [];
+                      if (tagIds.length === 0) return null;
+                      return (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {tagIds.map((tagId) => {
+                            const tag = tagsMap.get(tagId);
+                            if (!tag) return null;
+                            return (
+                              <span
+                                key={tagId}
+                                className={`rounded-full px-2 py-0.5 text-xs ${
+                                  tag.is_preset
+                                    ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                                    : "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
+                                }`}
+                              >
+                                {tag.name}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
 
                     {item.description && (
                       <p className="mt-1 text-sm text-zinc-500">

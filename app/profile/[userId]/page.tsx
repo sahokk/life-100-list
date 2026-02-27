@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { getLikesForItems } from "@/app/my-list/queries";
+import { getLikesForItems, getTagsForUser, getItemTags } from "@/app/my-list/queries";
 import type { Database } from "@/types/database";
 import ProfileClient from "./client";
 
@@ -74,10 +74,12 @@ export default async function ProfilePage({ params }: Props) {
     items = (data ?? []) as ItemRow[];
   }
 
-  const likes = await getLikesForItems(
-    items.map((i) => i.id),
-    currentUser?.id ?? null
-  );
+  const itemIds = items.map((i) => i.id);
+  const [likes, availableTags, itemTags] = await Promise.all([
+    getLikesForItems(itemIds, currentUser?.id ?? null),
+    getTagsForUser(userId),
+    getItemTags(itemIds),
+  ]);
 
   return (
     <ProfileClient
@@ -90,6 +92,8 @@ export default async function ProfilePage({ params }: Props) {
       isFollowing={isFollowing}
       followerCount={followerCount ?? 0}
       followingCount={followingCount ?? 0}
+      availableTags={availableTags}
+      itemTags={itemTags}
     />
   );
 }

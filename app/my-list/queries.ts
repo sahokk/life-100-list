@@ -67,6 +67,63 @@ export async function getOrCreateList() {
   return { list: newList, userId: user.id };
 }
 
+export type TagData = {
+  id: string;
+  name: string;
+  is_preset: boolean;
+};
+
+export type ItemTagData = {
+  itemId: string;
+  tagIds: string[];
+};
+
+export async function getTagsForUser(userId: string): Promise<TagData[]> {
+  const supabase = await createClient();
+
+  // プリセットタグ
+  const { data: presetTags } = await supabase
+    .from("tags")
+    .select("id, name, is_preset")
+    .eq("is_preset", true)
+    .order("name");
+
+  // ユーザーのカスタムタグ
+  const { data: customTags } = await supabase
+    .from("tags")
+    .select("id, name, is_preset")
+    .eq("user_id", userId)
+    .eq("is_preset", false)
+    .order("created_at");
+
+  return [
+    ...((presetTags ?? []) as TagData[]),
+    ...((customTags ?? []) as TagData[]),
+  ];
+}
+
+export async function getItemTags(itemIds: string[]): Promise<ItemTagData[]> {
+  if (itemIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("item_tags")
+    .select("item_id, tag_id")
+    .in("item_id", itemIds);
+
+  const tagMap = new Map<string, string[]>();
+  (data ?? []).forEach((row: { item_id: string; tag_id: string }) => {
+    const existing = tagMap.get(row.item_id) ?? [];
+    existing.push(row.tag_id);
+    tagMap.set(row.item_id, existing);
+  });
+
+  return itemIds.map((id) => ({
+    itemId: id,
+    tagIds: tagMap.get(id) ?? [],
+  }));
+}
+
 export async function getMyList() {
   const { list, userId } = await getOrCreateList();
   const supabase = await createClient();

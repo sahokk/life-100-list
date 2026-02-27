@@ -3,6 +3,13 @@
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import TagSelector from "./tag-selector";
+
+type TagOption = {
+  id: string;
+  name: string;
+  is_preset: boolean;
+};
 
 type ItemFormProps = {
   onSubmit: (data: {
@@ -10,6 +17,7 @@ type ItemFormProps = {
     description?: string;
     priority?: number;
     image_url?: string;
+    tag_ids?: string[];
   }) => Promise<void>;
   initialData?: {
     title: string;
@@ -20,6 +28,8 @@ type ItemFormProps = {
   onCancel?: () => void;
   submitLabel?: string;
   userId?: string;
+  availableTags?: TagOption[];
+  initialTagIds?: string[];
 };
 
 const PRIORITY_OPTIONS = [
@@ -35,11 +45,14 @@ export default function ItemForm({
   onCancel,
   submitLabel = "追加",
   userId,
+  availableTags = [],
+  initialTagIds = [],
 }: ItemFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [priority, setPriority] = useState(initialData?.priority ?? 0);
   const [imageUrl, setImageUrl] = useState<string | null>(initialData?.image_url ?? null);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +97,7 @@ export default function ItemForm({
       description: description.trim() || undefined,
       priority: priority || undefined,
       image_url: imageUrl ?? undefined,
+      tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
     });
     setLoading(false);
 
@@ -92,6 +106,7 @@ export default function ItemForm({
       setDescription("");
       setPriority(0);
       setImageUrl(null);
+      setSelectedTagIds([]);
     }
   }
 
@@ -132,6 +147,16 @@ export default function ItemForm({
           ))}
         </select>
       </div>
+
+      {/* タグ選択 */}
+      {availableTags.length > 0 && (
+        <TagSelector
+          selectedTagIds={selectedTagIds}
+          onChange={setSelectedTagIds}
+          availableTags={availableTags}
+          userId={userId}
+        />
+      )}
 
       {/* 画像アップロード */}
       {userId && (

@@ -21,7 +21,7 @@ export async function toggleListVisibility(listId: string, isPublic: boolean) {
   revalidatePath("/profile");
 }
 
-export async function addItem(listId: string, data: { title: string; description?: string; priority?: number; image_url?: string }) {
+export async function addItem(listId: string, data: { title: string; description?: string; priority?: number; image_url?: string; tag_ids?: string[] }) {
   if (!data.title || data.title.trim().length === 0) {
     throw new Error("タイトルは必須です");
   }
@@ -49,9 +49,16 @@ export async function addItem(listId: string, data: { title: string; description
     order: (count ?? 0) + 1,
   };
 
-  const { error } = await supabase.from("items").insert(item);
+  const { data: newItem, error } = await supabase.from("items").insert(item).select("id").single();
 
-  if (error) throw new Error("アイテムの追加に失敗しました");
+  if (error || !newItem) throw new Error("アイテムの追加に失敗しました");
+
+  // タグを紐付け
+  if (data.tag_ids && data.tag_ids.length > 0) {
+    await supabase.from("item_tags").insert(
+      data.tag_ids.map((tag_id) => ({ item_id: newItem.id, tag_id }))
+    );
+  }
 
   revalidatePath("/my-list");
   revalidatePath("/profile");
@@ -126,6 +133,43 @@ export async function updateCompletedAt(itemId: string, date: string) {
 
   revalidatePath("/my-list");
   revalidatePath("/profile");
+}
+
+export async function updateItemTags(itemId: string, tagIds: string[]) {
+  const supabase = await createClient();
+
+  // 既存のタグを削除
+  await supabase.from("item_tags").delete().eq("item_id", itemId);
+
+  // 新しいタグを挿入
+  if (tagIds.length > 0) {
+    const { error } = await supabase.from("item_tags").insert(
+      tagIds.map((tag_id) => ({ item_id: itemId, tag_id }))
+    );
+    if (error) throw new Error("タグの更新に失敗しました");
+  }
+
+  revalidatePath("/my-list");
+  revalidatePath("/profile");
+}
+
+export async function createCustomTag(name: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("認証が必要です");
+
+  const { data, error } = await supabase
+    .from("tags")
+    .insert({ name, is_preset: false, user_id: user.id })
+    .select("id, name, is_preset")
+    .single();
+
+  if (error || !data) throw new Error("タグの作成に失敗しました");
+
+  return data;
 }
 
 export async function updateItemImage(itemId: string, imageUrl: string | null) {

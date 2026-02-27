@@ -174,6 +174,53 @@ export type Database = {
         ];
       };
     };
+      tags: {
+        Row: {
+          id: string;
+          name: string;
+          is_preset: boolean;
+          user_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          is_preset?: boolean;
+          user_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+        };
+        Relationships: [];
+      };
+      item_tags: {
+        Row: {
+          item_id: string;
+          tag_id: string;
+        };
+        Insert: {
+          item_id: string;
+          tag_id: string;
+        };
+        Update: {};
+        Relationships: [
+          {
+            foreignKeyName: "item_tags_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "item_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notifications: {
         Row: {
           id: string;
