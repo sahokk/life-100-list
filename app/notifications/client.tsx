@@ -40,6 +40,10 @@ function getNotificationMessage(notification: NotificationWithUser): string {
       return notification.relatedItemTitle
         ? `${notification.relatedUsername} さんが「${notification.relatedItemTitle}」にいいねしました`
         : `${notification.relatedUsername} さんがあなたのアイテムにいいねしました`;
+    case "comment":
+      return notification.relatedItemTitle
+        ? `${notification.relatedUsername} さんが「${notification.relatedItemTitle}」にコメントしました`
+        : `${notification.relatedUsername} さんがあなたのアイテムにコメントしました`;
     default:
       return "新しい通知があります";
   }
@@ -50,6 +54,7 @@ function getNotificationLink(notification: NotificationWithUser, userId: string)
     case "follow":
       return `/profile/${notification.relatedUserId}`;
     case "like":
+    case "comment":
       return `/profile/${userId}`;
     default:
       return "/notifications";

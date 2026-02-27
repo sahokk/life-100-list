@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type NotificationWithUser = {
   id: string;
-  type: "follow" | "like";
+  type: "follow" | "like" | "comment";
   relatedUserId: string;
   relatedUsername: string;
   relatedUserIconUrl: string | null;
@@ -64,7 +64,7 @@ export async function getNotifications(): Promise<{
     const relatedUser = usersMap.get(n.related_user_id);
     return {
       id: n.id,
-      type: n.type as "follow" | "like",
+      type: n.type as "follow" | "like" | "comment",
       relatedUserId: n.related_user_id,
       relatedUsername: relatedUser?.username ?? "ユーザー",
       relatedUserIconUrl: relatedUser?.icon_url ?? null,

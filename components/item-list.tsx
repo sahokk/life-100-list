@@ -14,6 +14,7 @@ import ConfirmDialog from "./confirm-dialog";
 import DatePickerDialog from "./date-picker-dialog";
 import LikeButton from "./like-button";
 import ShareButton from "./share-button";
+import CommentSection from "./comment-section";
 import { useToast } from "./toast";
 import Image from "next/image";
 
@@ -36,6 +37,14 @@ type ItemTagData = {
   tagIds: string[];
 };
 
+type CommentItem = {
+  id: string;
+  itemId: string;
+  body: string;
+  created_at: string;
+  user: { id: string; username: string };
+};
+
 type ItemListProps = {
   items: ItemRow[];
   editable?: boolean;
@@ -45,6 +54,8 @@ type ItemListProps = {
   isLoggedIn?: boolean;
   availableTags?: TagOption[];
   itemTags?: ItemTagData[];
+  comments?: CommentItem[];
+  currentUserId?: string | null;
 };
 
 type FilterType = "all" | "incomplete" | "completed";
@@ -64,6 +75,8 @@ export default function ItemList({
   isLoggedIn = false,
   availableTags = [],
   itemTags = [],
+  comments = [],
+  currentUserId = null,
 }: ItemListProps) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -365,6 +378,14 @@ export default function ItemList({
                         </div>
                       );
                     })()}
+
+                    {/* コメント */}
+                    <CommentSection
+                      itemId={item.id}
+                      comments={comments.filter((c) => c.itemId === item.id)}
+                      currentUserId={currentUserId ?? null}
+                      isLoggedIn={isLoggedIn}
+                    />
                   </div>
 
                   {/* アクション */}

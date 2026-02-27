@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Database } from "@/types/database";
-import type { LikeData, TagData, ItemTagData } from "@/app/my-list/queries";
+import type { LikeData, TagData, ItemTagData, CommentData } from "@/app/my-list/queries";
 import { addItem, toggleListVisibility } from "@/app/my-list/actions";
 import ItemList from "@/components/item-list";
 import ItemForm from "@/components/item-form";
@@ -27,6 +27,8 @@ type Props = {
   followingCount: number;
   availableTags: TagData[];
   itemTags: ItemTagData[];
+  comments: CommentData[];
+  currentUserId: string | null;
 };
 
 export default function ProfileClient({
@@ -41,6 +43,8 @@ export default function ProfileClient({
   followingCount,
   availableTags,
   itemTags,
+  comments,
+  currentUserId,
 }: Props) {
   const [showForm, setShowForm] = useState(false);
   const { showToast } = useToast();
@@ -183,6 +187,8 @@ export default function ProfileClient({
             isLoggedIn={isLoggedIn}
             availableTags={availableTags}
             itemTags={itemTags}
+            comments={comments}
+            currentUserId={currentUserId}
           />
         ) : list && !list.is_public ? (
           <p className="text-sm text-zinc-500">このリストは非公開です</p>

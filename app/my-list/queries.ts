@@ -124,6 +124,47 @@ export async function getItemTags(itemIds: string[]): Promise<ItemTagData[]> {
   }));
 }
 
+export type CommentData = {
+  id: string;
+  itemId: string;
+  body: string;
+  created_at: string;
+  user: {
+    id: string;
+    username: string;
+  };
+};
+
+export async function getCommentsForItems(itemIds: string[]): Promise<CommentData[]> {
+  if (itemIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("comments")
+    .select("id, item_id, body, created_at, user_id")
+    .in("item_id", itemIds)
+    .order("created_at", { ascending: true });
+
+  if (!data || data.length === 0) return [];
+
+  // ユーザー情報を取得
+  const userIds = [...new Set(data.map((c: { user_id: string }) => c.user_id))];
+  const { data: users } = await supabase
+    .from("users")
+    .select("id, username")
+    .in("id", userIds);
+
+  const usersMap = new Map((users ?? []).map((u: { id: string; username: string }) => [u.id, u]));
+
+  return data.map((c: { id: string; item_id: string; body: string; created_at: string; user_id: string }) => ({
+    id: c.id,
+    itemId: c.item_id,
+    body: c.body,
+    created_at: c.created_at,
+    user: usersMap.get(c.user_id) ?? { id: c.user_id, username: "不明" },
+  }));
+}
+
 export async function getMyList() {
   const { list, userId } = await getOrCreateList();
   const supabase = await createClient();

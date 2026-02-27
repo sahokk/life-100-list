@@ -228,7 +228,7 @@ export type Database = {
         Row: {
           id: string;
           user_id: string;
-          type: "follow" | "like";
+          type: "follow" | "like" | "comment";
           related_user_id: string;
           related_item_id: string | null;
           is_read: boolean;
@@ -237,7 +237,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id: string;
-          type: "follow" | "like";
+          type: "follow" | "like" | "comment";
           related_user_id: string;
           related_item_id?: string | null;
           is_read?: boolean;
@@ -246,7 +246,7 @@ export type Database = {
         Update: {
           id?: string;
           user_id?: string;
-          type?: "follow" | "like";
+          type?: "follow" | "like" | "comment";
           related_user_id?: string;
           related_item_id?: string | null;
           is_read?: boolean;
@@ -271,6 +271,41 @@ export type Database = {
             columns: ["related_item_id"];
             isOneToOne: false;
             referencedRelation: "items";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      comments: {
+        Row: {
+          id: string;
+          item_id: string;
+          user_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_id: string;
+          user_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          body?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comments_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];
