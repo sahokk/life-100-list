@@ -178,6 +178,7 @@ export default function ProfileClient({
             items={items}
             editable={isOwner}
             userId={isOwner ? profile.id : undefined}
+            listUserId={profile.id}
             likes={likes}
             isLoggedIn={isLoggedIn}
             availableTags={availableTags}

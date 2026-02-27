@@ -13,6 +13,7 @@ import ItemForm from "./item-form";
 import ConfirmDialog from "./confirm-dialog";
 import DatePickerDialog from "./date-picker-dialog";
 import LikeButton from "./like-button";
+import ShareButton from "./share-button";
 import { useToast } from "./toast";
 import Image from "next/image";
 
@@ -39,6 +40,7 @@ type ItemListProps = {
   items: ItemRow[];
   editable?: boolean;
   userId?: string;
+  listUserId?: string;
   likes?: LikeData[];
   isLoggedIn?: boolean;
   availableTags?: TagOption[];
@@ -57,6 +59,7 @@ export default function ItemList({
   items,
   editable = false,
   userId,
+  listUserId,
   likes = [],
   isLoggedIn = false,
   availableTags = [],
@@ -342,17 +345,23 @@ export default function ItemList({
                       </p>
                     )}
 
-                    {/* いいねボタン */}
+                    {/* いいね & シェア */}
                     {(() => {
                       const like = likesMap.get(item.id);
                       return (
-                        <div className="mt-2">
+                        <div className="mt-2 flex items-center gap-2">
                           <LikeButton
                             itemId={item.id}
                             likeCount={like?.count ?? 0}
                             isLiked={like?.isLiked ?? false}
                             disabled={!isLoggedIn}
                           />
+                          {item.is_completed && listUserId && (
+                            <ShareButton
+                              title={item.title}
+                              url={`/profile/${listUserId}`}
+                            />
+                          )}
                         </div>
                       );
                     })()}
