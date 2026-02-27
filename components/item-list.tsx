@@ -200,6 +200,7 @@ export default function ItemList({
                     description: item.description,
                     priority: item.priority,
                     image_url: item.image_url,
+                    deadline: item.deadline,
                   }}
                   userId={userId}
                   submitLabel="更新"
@@ -212,6 +213,7 @@ export default function ItemList({
                         description: data.description ?? null,
                         priority: data.priority ?? null,
                         image_url: data.image_url ?? null,
+                        deadline: data.deadline ?? null,
                       });
                       if (data.tag_ids) {
                         await updateItemTags(item.id, data.tag_ids);
@@ -307,6 +309,36 @@ export default function ItemList({
                             変更
                           </button>
                         )}
+                      </p>
+                    )}
+
+                    {/* 期限表示 */}
+                    {item.deadline && !item.is_completed && (() => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const dl = new Date(item.deadline + "T00:00:00");
+                      const diffDays = Math.ceil((dl.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                      const isOverdue = diffDays < 0;
+                      const isSoon = diffDays >= 0 && diffDays <= 7;
+                      return (
+                        <p className={`mt-1 text-xs ${
+                          isOverdue
+                            ? "font-medium text-red-500"
+                            : isSoon
+                              ? "text-orange-500"
+                              : "text-zinc-400"
+                        }`}>
+                          {isOverdue
+                            ? `期限切れ（${Math.abs(diffDays)}日超過）`
+                            : diffDays === 0
+                              ? "期限: 今日"
+                              : `期限: ${dl.toLocaleDateString("ja-JP")}（あと${diffDays}日）`}
+                        </p>
+                      );
+                    })()}
+                    {item.deadline && item.is_completed && (
+                      <p className="mt-1 text-xs text-zinc-400">
+                        期限: {new Date(item.deadline + "T00:00:00").toLocaleDateString("ja-JP")}
                       </p>
                     )}
 

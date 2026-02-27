@@ -32,6 +32,18 @@ export default async function MyListPage() {
   // 最近追加したアイテム (直近5件)
   const recentlyAdded = typedItems.slice(0, 5);
 
+  // 期限が近いアイテム (未達成 & 期限7日以内 or 期限切れ)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcomingDeadlines = typedItems
+    .filter((i) => !i.is_completed && i.deadline)
+    .filter((i) => {
+      const dl = new Date(i.deadline! + "T00:00:00");
+      const diffDays = Math.ceil((dl.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays <= 7;
+    })
+    .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime());
+
   // フォロワー数
   const { count: followerCount } = await supabase
     .from("follows")
@@ -56,6 +68,7 @@ export default async function MyListPage() {
       completedCount={completedCount}
       completedItems={completedItems}
       recentlyAdded={recentlyAdded}
+      upcomingDeadlines={upcomingDeadlines}
       followerCount={followerCount ?? 0}
       totalLikes={totalLikes}
       isPublic={list.is_public}

@@ -21,7 +21,7 @@ export async function toggleListVisibility(listId: string, isPublic: boolean) {
   revalidatePath("/profile");
 }
 
-export async function addItem(listId: string, data: { title: string; description?: string; priority?: number; image_url?: string; tag_ids?: string[] }) {
+export async function addItem(listId: string, data: { title: string; description?: string; priority?: number; image_url?: string; tag_ids?: string[]; deadline?: string }) {
   if (!data.title || data.title.trim().length === 0) {
     throw new Error("タイトルは必須です");
   }
@@ -46,6 +46,7 @@ export async function addItem(listId: string, data: { title: string; description
     description: data.description || null,
     priority: data.priority || null,
     image_url: data.image_url || null,
+    deadline: data.deadline || null,
     order: (count ?? 0) + 1,
   };
 

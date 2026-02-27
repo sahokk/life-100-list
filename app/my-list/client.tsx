@@ -12,6 +12,7 @@ type Props = {
   completedCount: number;
   completedItems: ItemRow[];
   recentlyAdded: ItemRow[];
+  upcomingDeadlines: ItemRow[];
   followerCount: number;
   totalLikes: number;
   isPublic: boolean;
@@ -23,6 +24,7 @@ export default function DashboardClient({
   completedCount,
   completedItems,
   recentlyAdded,
+  upcomingDeadlines,
   followerCount,
   totalLikes,
   isPublic,
@@ -77,6 +79,43 @@ export default function DashboardClient({
           />
         </div>
       </div>
+
+      {/* 期限が近いアイテム */}
+      {upcomingDeadlines.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold">期限が近いアイテム</h2>
+          <ul className="space-y-2">
+            {upcomingDeadlines.map((item) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const dl = new Date(item.deadline! + "T00:00:00");
+              const diffDays = Math.ceil((dl.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              const isOverdue = diffDays < 0;
+              return (
+                <li
+                  key={item.id}
+                  className={`flex items-center justify-between rounded-xl border p-3 ${
+                    isOverdue
+                      ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20"
+                      : "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{item.title}</span>
+                  <span className={`text-xs font-medium ${
+                    isOverdue ? "text-red-600" : "text-orange-600"
+                  }`}>
+                    {isOverdue
+                      ? `${Math.abs(diffDays)}日超過`
+                      : diffDays === 0
+                        ? "今日"
+                        : `あと${diffDays}日`}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* 達成タイムライン */}
       <section className="mb-8">

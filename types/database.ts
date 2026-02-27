@@ -66,6 +66,7 @@ export type Database = {
           completed_at: string | null;
           priority: number | null;
           image_url: string | null;
+          deadline: string | null;
           order: number;
           created_at: string;
           updated_at: string;
@@ -79,6 +80,7 @@ export type Database = {
           completed_at?: string | null;
           priority?: number | null;
           image_url?: string | null;
+          deadline?: string | null;
           order?: number;
           created_at?: string;
           updated_at?: string;
@@ -90,6 +92,7 @@ export type Database = {
           completed_at?: string | null;
           priority?: number | null;
           image_url?: string | null;
+          deadline?: string | null;
           order?: number;
           updated_at?: string;
         };

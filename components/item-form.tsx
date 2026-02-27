@@ -18,12 +18,14 @@ type ItemFormProps = {
     priority?: number;
     image_url?: string;
     tag_ids?: string[];
+    deadline?: string;
   }) => Promise<void>;
   initialData?: {
     title: string;
     description?: string | null;
     priority?: number | null;
     image_url?: string | null;
+    deadline?: string | null;
   };
   onCancel?: () => void;
   submitLabel?: string;
@@ -52,6 +54,7 @@ export default function ItemForm({
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [priority, setPriority] = useState(initialData?.priority ?? 0);
   const [imageUrl, setImageUrl] = useState<string | null>(initialData?.image_url ?? null);
+  const [deadline, setDeadline] = useState(initialData?.deadline ?? "");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -98,6 +101,7 @@ export default function ItemForm({
       priority: priority || undefined,
       image_url: imageUrl ?? undefined,
       tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+      deadline: deadline || undefined,
     });
     setLoading(false);
 
@@ -106,6 +110,7 @@ export default function ItemForm({
       setDescription("");
       setPriority(0);
       setImageUrl(null);
+      setDeadline("");
       setSelectedTagIds([]);
     }
   }
@@ -146,6 +151,25 @@ export default function ItemForm({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium">期限:</label>
+        <input
+          type="date"
+          value={deadline}
+          onChange={(e) => setDeadline(e.target.value)}
+          className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        {deadline && (
+          <button
+            type="button"
+            onClick={() => setDeadline("")}
+            className="text-xs text-zinc-400 hover:text-zinc-600"
+          >
+            クリア
+          </button>
+        )}
       </div>
 
       {/* タグ選択 */}
