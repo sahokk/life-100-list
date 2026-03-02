@@ -50,7 +50,8 @@ export async function addComment(itemId: string, body: string) {
     }
   }
 
-  revalidatePath("/profile");
+  revalidatePath("/my-list");
+  revalidatePath("/profile/[userId]", "page");
 }
 
 export async function deleteComment(commentId: string) {
@@ -63,5 +64,6 @@ export async function deleteComment(commentId: string) {
 
   if (error) throw new Error("コメントの削除に失敗しました");
 
-  revalidatePath("/profile");
+  revalidatePath("/my-list");
+  revalidatePath("/profile/[userId]", "page");
 }

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateList, getTagsForUser, getItemTags } from "./queries";
-import DashboardClient from "./client";
+import { getOrCreateList, getLikesForItems, getTagsForUser, getItemTags, getCommentsForItems } from "./queries";
+import MyListClient from "./client";
 import type { Database } from "@/types/database";
 
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
@@ -9,11 +9,13 @@ export default async function MyListPage() {
   const { list, userId } = await getOrCreateList();
   const supabase = await createClient();
 
+  // アイテム一覧 (order順)
   const { data: items } = await supabase
     .from("items")
     .select("*")
     .eq("list_id", list.id)
-    .order("created_at", { ascending: false });
+    .order("order", { ascending: true })
+    .order("created_at", { ascending: true });
 
   const typedItems = (items ?? []) as ItemRow[];
 
@@ -28,9 +30,6 @@ export default async function MyListPage() {
         new Date(b.completed_at!).getTime() -
         new Date(a.completed_at!).getTime()
     );
-
-  // 最近追加したアイテム (直近5件)
-  const recentlyAdded = typedItems.slice(0, 5);
 
   // 期限が近いアイテム (未達成 & 期限7日以内 or 期限切れ)
   const today = new Date();
@@ -50,28 +49,26 @@ export default async function MyListPage() {
     .select("*", { count: "exact", head: true })
     .eq("followee_id", userId);
 
-  // いいね総数
+  // いいね・タグ・コメント
   const itemIds = typedItems.map((i) => i.id);
-  let totalLikes = 0;
-  if (itemIds.length > 0) {
-    const { count } = await supabase
-      .from("likes")
-      .select("*", { count: "exact", head: true })
-      .in("item_id", itemIds);
-    totalLikes = count ?? 0;
-  }
-
-  // タグ別進捗
-  const [tags, itemTagsList] = await Promise.all([
+  const [likes, availableTags, itemTags, comments] = await Promise.all([
+    getLikesForItems(itemIds, userId),
     getTagsForUser(userId),
     getItemTags(itemIds),
+    getCommentsForItems(itemIds),
   ]);
-  const itemTagsMap = new Map(itemTagsList.map((t) => [t.itemId, t.tagIds]));
-  const tagsMap = new Map(tags.map((t) => [t.id, t.name]));
+
+  // いいね総数
+  let totalLikes = 0;
+  likes.forEach((l) => { totalLikes += l.count; });
+
+  // タグ別進捗
+  const itemTagsMap = new Map(itemTags.map((t) => [t.itemId, t.tagIds]));
+  const tagsMap = new Map(availableTags.map((t) => [t.id, t.name]));
   const tagStatsMap = new Map<string, { name: string; completed: number; total: number }>();
   for (const item of typedItems) {
-    const tagIds = itemTagsMap.get(item.id) ?? [];
-    for (const tagId of tagIds) {
+    const tIds = itemTagsMap.get(item.id) ?? [];
+    for (const tagId of tIds) {
       const existing = tagStatsMap.get(tagId) ?? { name: tagsMap.get(tagId) ?? "", completed: 0, total: 0 };
       existing.total++;
       if (item.is_completed) existing.completed++;
@@ -81,16 +78,20 @@ export default async function MyListPage() {
   const tagStats = Array.from(tagStatsMap.values()).sort((a, b) => a.name.localeCompare(b.name, "ja"));
 
   return (
-    <DashboardClient
+    <MyListClient
       userId={userId}
+      list={list}
+      items={typedItems}
+      likes={likes}
+      availableTags={availableTags}
+      itemTags={itemTags}
+      comments={comments}
       totalCount={totalCount}
       completedCount={completedCount}
       completedItems={completedItems}
-      recentlyAdded={recentlyAdded}
       upcomingDeadlines={upcomingDeadlines}
       followerCount={followerCount ?? 0}
       totalLikes={totalLikes}
-      isPublic={list.is_public}
       tagStats={tagStats}
     />
   );

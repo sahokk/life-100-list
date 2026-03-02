@@ -26,7 +26,7 @@ export default function CommentSection({
   comments,
   currentUserId,
   isLoggedIn,
-}: Props) {
+}: Readonly<Props>) {
   const [expanded, setExpanded] = useState(false);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);

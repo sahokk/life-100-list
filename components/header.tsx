@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
+type UserProfile = { username: string; icon_url: string | null };
+
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
@@ -26,10 +30,22 @@ export default function Header() {
   );
 
   useEffect(() => {
+    async function fetchProfile(userId: string) {
+      const { data } = await supabase
+        .from("users")
+        .select("username, icon_url")
+        .eq("id", userId)
+        .single();
+      if (data) setProfile(data);
+    }
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setLoading(false);
-      if (user) fetchUnreadCount(user.id);
+      if (user) {
+        fetchUnreadCount(user.id);
+        fetchProfile(user.id);
+      }
     });
 
     const {
@@ -39,8 +55,10 @@ export default function Header() {
       setUser(newUser);
       if (newUser) {
         fetchUnreadCount(newUser.id);
+        fetchProfile(newUser.id);
       } else {
         setUnreadCount(0);
+        setProfile(null);
       }
     });
 
@@ -55,7 +73,7 @@ export default function Header() {
       subscription.unsubscribe();
       clearInterval(interval);
     };
-  }, [supabase.auth, fetchUnreadCount, supabase]);
+  }, [supabase, supabase.auth, fetchUnreadCount]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -79,7 +97,7 @@ export default function Header() {
                 href="/my-list"
                 className="text-sm hover:text-blue-600"
               >
-                マイリスト
+                マイページ
               </Link>
               <Link
                 href="/notifications"
@@ -107,9 +125,22 @@ export default function Header() {
               </Link>
               <Link
                 href={`/profile/${user.id}`}
-                className="text-sm hover:text-blue-600"
+                title="プロフィール"
               >
-                プロフィール
+                {profile?.icon_url ? (
+                  <Image
+                    src={profile.icon_url}
+                    alt={profile.username}
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
+                    style={{ width: 32, height: 32 }}
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-100 to-blue-200 text-sm font-bold text-blue-600 dark:from-blue-900 dark:to-blue-800 dark:text-blue-300">
+                    {profile?.username?.charAt(0).toUpperCase() ?? "?"}
+                  </div>
+                )}
               </Link>
               <button
                 onClick={handleLogout}

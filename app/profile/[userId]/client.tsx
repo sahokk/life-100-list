@@ -1,15 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Database } from "@/types/database";
 import type { LikeData, TagData, ItemTagData, CommentData } from "@/app/my-list/queries";
-import { addItem, toggleListVisibility } from "@/app/my-list/actions";
 import ItemList from "@/components/item-list";
-import ItemForm from "@/components/item-form";
 import FollowButton from "@/components/follow-button";
-import { useToast } from "@/components/toast";
 
 type ListRow = Database["public"]["Tables"]["lists"]["Row"];
 type ItemRow = Database["public"]["Tables"]["items"]["Row"];
@@ -45,22 +41,9 @@ export default function ProfileClient({
   itemTags,
   comments,
   currentUserId,
-}: Props) {
-  const [showForm, setShowForm] = useState(false);
-  const { showToast } = useToast();
-
+}: Readonly<Props>) {
   const completedCount = items.filter((i) => i.is_completed).length;
   const canViewList = list && (list.is_public || isOwner);
-
-  async function handleToggleVisibility(checked: boolean) {
-    if (!list) return;
-    try {
-      await toggleListVisibility(list.id, checked);
-      showToast(checked ? "リストを公開しました" : "リストを非公開にしました");
-    } catch {
-      showToast("更新に失敗しました", "error");
-    }
-  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -76,7 +59,7 @@ export default function ProfileClient({
             style={{ width: 96, height: 96 }}
           />
         ) : (
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-2xl font-bold text-blue-600 dark:from-blue-900 dark:to-blue-800 dark:text-blue-300">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-blue-100 to-blue-200 text-2xl font-bold text-blue-600 dark:from-blue-900 dark:to-blue-800 dark:text-blue-300">
             {profile.username.charAt(0).toUpperCase()}
           </div>
         )}
@@ -132,56 +115,20 @@ export default function ProfileClient({
       <div className="mt-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">やりたいことリスト</h2>
-          {isOwner && list && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={list.is_public}
-                onChange={(e) => handleToggleVisibility(e.target.checked)}
-                className="rounded"
-              />
-              公開
-            </label>
+          {isOwner && (
+            <Link
+              href="/my-list"
+              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              マイページでリストを編集 →
+            </Link>
           )}
         </div>
 
-        {/* オーナー: アイテム追加 */}
-        {isOwner && list && (
-          <div className="mb-6">
-            {showForm ? (
-              <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-                <ItemForm
-                  userId={profile.id}
-                  availableTags={availableTags}
-                  onSubmit={async (data) => {
-                    try {
-                      await addItem(list.id, data);
-                      showToast("アイテムを追加しました");
-                    } catch {
-                      showToast("追加に失敗しました", "error");
-                    }
-                    setShowForm(false);
-                  }}
-                  onCancel={() => setShowForm(false)}
-                />
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowForm(true)}
-                className="w-full rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm text-zinc-500 hover:border-blue-400 hover:text-blue-600 dark:border-zinc-700 dark:hover:border-blue-500"
-              >
-                + やりたいことを追加
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* アイテム一覧 */}
+        {/* アイテム一覧（閲覧専用） */}
         {canViewList ? (
           <ItemList
             items={items}
-            editable={isOwner}
-            userId={isOwner ? profile.id : undefined}
             listUserId={profile.id}
             likes={likes}
             isLoggedIn={isLoggedIn}

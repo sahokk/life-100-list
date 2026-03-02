@@ -79,5 +79,5 @@ export async function toggleLike(itemId: string) {
   }
 
   revalidatePath("/my-list");
-  revalidatePath("/profile");
+  revalidatePath("/profile/[userId]", "page");
 }

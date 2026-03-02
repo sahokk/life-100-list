@@ -20,7 +20,7 @@ function formatDay(dateStr: string): string {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-export default function AchievementTimeline({ items }: Props) {
+export default function AchievementTimeline({ items }: Readonly<Props>) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-zinc-500">まだ達成したアイテムはありません</p>
@@ -50,7 +50,7 @@ export default function AchievementTimeline({ items }: Props) {
             {monthItems.map((item) => (
               <div key={item.id} className="relative mb-3 last:mb-0">
                 {/* Dot on the line */}
-                <div className="absolute -left-[1.625rem] top-1.5 h-2.5 w-2.5 rounded-full bg-green-500" />
+                <div className="absolute -left-6.5 top-1.5 h-2.5 w-2.5 rounded-full bg-green-500" />
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-sm font-medium">{item.title}</span>
                   <span className="shrink-0 text-xs text-zinc-400">

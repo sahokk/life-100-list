@@ -176,7 +176,6 @@ export type Database = {
           },
         ];
       };
-    };
       tags: {
         Row: {
           id: string;
@@ -310,6 +309,7 @@ export type Database = {
           },
         ];
       };
+    };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
